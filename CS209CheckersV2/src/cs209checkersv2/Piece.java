@@ -139,10 +139,10 @@ public class Piece {
                 isMovableLeft = true;
         }
         
-        if(current.name.equals("W")) {
+        if(current.name.equals("White")) {
             this.isForwardable = (isMovableRight || isMovableDown);
         }
-        else if(current.name.equals("B")) {
+        else if(current.name.equals("Black")) {
             this.isForwardable = (isMovableLeft || isMovableUp);
         }
         

@@ -26,8 +26,9 @@ public class CS209CheckersV2 {
     public static void main(String[] args) {
         System.out.println("\u25CB\u25CF");
         
+        //testInitializeBoard();
         initializeBoard();
-        testPrintBoard();
+        //testPrintBoard();
         
         do {
             printBoard();
@@ -42,6 +43,7 @@ public class CS209CheckersV2 {
         }
     }
     
+    //initializes board to initial state
     public static void initializeBoard() {
         gameBoard = new Tile[4][4];
         players = new Player[2];
@@ -101,7 +103,7 @@ public class CS209CheckersV2 {
         System.out.println("Player " + players[curPlayer].name + "'s turn.");
         
         //if all the user's pieces cannot be forwardable, then they can choose to pass
-        if(players[curPlayer].checkForwardability() == true) {
+        if(players[curPlayer].checkForwardability() == false) {
             System.out.print("No forwardable moves. Do you want to pass? (Y/N): ");
             String answer = s.nextLine();
             if(answer.equals("Y")) {
@@ -156,50 +158,10 @@ public class CS209CheckersV2 {
         playerTurn = !playerTurn;
     }
     
-    /*
     public static boolean selectSource(Piece sourcePiece) {
         String sourceCell;
         boolean isValidSourceCell;
-        
-        
-        System.out.println("Please select a valid piece: (Format: A1, B3, D4)");
-        sourceCell = s.nextLine();
-        if(sourceCell.length()==2) {
-            isValidSourceCell = checkCellValidity(sourceCell);
-            //ends function call prematurely if not valid input
-            if(isValidSourceCell==false)
-                return false;
-
-
-            //if input is valid then it is converted to a source coordinate
-            sourceCoordinate = convertToCoordinate(sourceCell);
-            
-            //then checks if piece is owned and is movable
-            //System.out.println(coordinate[0] + ", " + coordinate[1]);
-            boolean isValidPiece = checkPieceValidity(sourceCoordinate);
-            
-            //if piece is not movable then function call is ended prematurely to be called again
-            if(isValidPiece==false)
-                return false;
-            
-        }
-        else {
-            //if the input is not of length 2 then function call is ended prematurely to be called again
-            return false;
-        }
-        
-        System.out.println(sourceCell + " is selected.");
-  
-        sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
-        
-        return true;
-    }
-    */
-    
-    public static boolean selectSource(Piece sourcePiece) {
-        String sourceCell;
-        boolean isValidSourceCell;
-        boolean isMovable;
+        //boolean isMovable;
         
         System.out.println("Please select a valid piece: (Format: A1, B3, D4)");
         sourceCell = s.nextLine();
@@ -429,110 +391,7 @@ public class CS209CheckersV2 {
         
         return cell;
     }
-    
-    
-    //checks if the piece selected is valid
-    //ADD CASES IF NO FORWARDABLE MOVES ARE POSSIBLE LIKE SWAPPABLE AND HOPPABLE
-    public static boolean checkPieceValidity(int[] coordinate) {
-        //these variables are just for easier access of the row and col coordinates
-        int row = coordinate[0];
-        int col = coordinate[1];
-        //this variable is for checking if the player selects a piece that they own
-        boolean isOwned = false;
-        //this variable is for checking if the piece selected can move
-        boolean isMovable = false;
-        
-        if(row != 9999 && col != 9999) { 
-            //checks if it's white's turn
-            if(playerTurn==false) {
-                //if selected cell contains a white piece
-                if(players[0].isOwner(row, col)) {
-                    isOwned = true;
-                    isMovable = checkMovability(players[0].obtainPiece(row, col));
-                }
-            }
-
-            //check if  it's black's turn
-            else if(playerTurn==true) {
-                //if selected cell contains a black piece
-                if(players[1].isOwner(row, col)) {
-                    isOwned = true;
-                    isMovable = checkMovability(players[1].obtainPiece(row, col));
-                }
-            }
-
-            if(isOwned)
-                System.out.print("Player owns the piece. ");
-            else
-                System.out.print("Player does not own the piece. ");
-            if(isMovable)
-                System.out.println("Piece is movable.");
-            else
-                System.out.println("Piece is not movable.");
-        }
-        else {
-            System.out.println("Invalid cell");
-            return false;
-        }
-        return (isOwned && isMovable);
-    }
-    
-    //OBSOLETE METHOD
-    //this method checks if the piece selected can be moved
-    //EDIT THIS METHOD WHEN CONSIDERING HOPS AND SWAPS
-    public static boolean checkMovability(Piece currpiece) {
-        boolean isMovableUp = false;
-        boolean isMovableDown = false;
-        boolean isMovableRight = false;
-        boolean isMovableLeft = false;
-        
-        //checks if the piece is in the top row (row A)
-        if(currpiece.xcoord==0) {
-            //if tile below piece is empty
-            if(gameBoard[currpiece.xcoord+1][currpiece.ycoord].hasPiece == false)
-                isMovableDown = true;
-        }
-        //checks if the piece is in the middle rows (row B or C)
-        else if(currpiece.xcoord==1 || currpiece.xcoord==2) {
-            //if tile above piece is empty
-            if(gameBoard[currpiece.xcoord-1][currpiece.ycoord].hasPiece == false)
-                isMovableUp = true;
-            //if tile below piece is empty
-            if(gameBoard[currpiece.xcoord+1][currpiece.ycoord].hasPiece == false)
-                isMovableDown = true;
-        }
-        //checks if the piece is in the bottom row (row D)
-        else {
-            //if tile above piece is empty
-            if(gameBoard[currpiece.xcoord-1][currpiece.ycoord].hasPiece == false)
-                isMovableUp = true;
-        }
-        
-        //checks if the piece is in the leftmost column (col 1)
-        if(currpiece.ycoord==0) {
-            //if tile to the right of piece is empty
-            if(gameBoard[currpiece.xcoord][currpiece.ycoord+1].hasPiece == false)
-                isMovableRight = true;
-        }
-        //checks if the piece is in the middle columns (col 2 or 3)
-        else if(currpiece.ycoord==1 || currpiece.ycoord==2) {
-            //if tile to the left of piece is empty
-            if(gameBoard[currpiece.xcoord][currpiece.ycoord-1].hasPiece == false)
-                isMovableLeft = true;
-            //if tile to the right of piece is empty
-            if(gameBoard[currpiece.xcoord][currpiece.ycoord+1].hasPiece == false)
-                isMovableRight = true;
-        }
-        //checks if the piece is in the rightmost column (col 4)
-        else {
-            //if tile to the left of piece is empty
-            if(gameBoard[currpiece.xcoord][currpiece.ycoord-1].hasPiece == false)
-                isMovableLeft = true;
-        }
-        
-        return (isMovableUp || isMovableDown || isMovableRight || isMovableLeft);
-    }
-    
+      
     //will find cells that the piece can be moved to
     //EDIT THIS METHOD WHEN CONSIDERING HOPS AND SWAPS
     public static int[][] findPlaceableCells(int[] sourceCoordinate) {
@@ -701,4 +560,51 @@ public class CS209CheckersV2 {
         }
         System.out.println("\t\u255A\u2550\u2550\u2569\u2550\u2550\u2569\u2550\u2550\u2569\u2550\u2550\u255D");
     }
+    
+    public static void testInitializeBoard() {
+        gameBoard = new Tile[4][4];
+        players = new Player[2];
+        playerTurn = false;
+        
+        players[0] = new Player("White");
+        players[1] = new Player("Black");
+        
+        
+        //sets up the gameBoard to default null values
+        for(int i = 0; i < gameBoard.length; i++) {
+            for(int j = 0; j <gameBoard.length; j++) {
+                gameBoard[i][j] = new Tile();
+            }
+        }
+        //initializes the players' pieces to the default place
+        //white pieces
+        players[0].ownedPieces = new Piece[6];
+        players[0].ownedPieces[0] = new Piece(0,0,"W", players[0]);
+        players[0].ownedPieces[1] = new Piece(0,1,"W", players[0]);
+        players[0].ownedPieces[2] = new Piece(0,2,"W", players[0]);
+        players[0].ownedPieces[3] = new Piece(1,0,"W", players[0]);
+        players[0].ownedPieces[4] = new Piece(1,1,"W", players[0]);
+        players[0].ownedPieces[5] = new Piece(2,0,"W", players[0]);
+        
+        //black pieces
+        players[1].ownedPieces = new Piece[6];
+        players[1].ownedPieces[0] = new Piece(0,3,"B", players[1]);
+        players[1].ownedPieces[1] = new Piece(1,2,"B", players[1]);
+        players[1].ownedPieces[2] = new Piece(1,3,"B", players[1]);
+        players[1].ownedPieces[3] = new Piece(2,1,"B", players[1]);
+        players[1].ownedPieces[4] = new Piece(3,0,"B", players[1]);
+        players[1].ownedPieces[5] = new Piece(3,1,"B", players[1]);
+        
+        //this places the white pieces on the gameboard
+        for(int i = 0; i < players[0].ownedPieces.length; i++) {
+            gameBoard[players[0].ownedPieces[i].xcoord][players[0].ownedPieces[i].ycoord] = new Tile(true, players[0].ownedPieces[i]);
+            
+        }       
+        
+        //this places black pieces on the gameboard
+        for(int i = 0; i < players[1].ownedPieces.length; i++) {
+            gameBoard[players[1].ownedPieces[i].xcoord][players[1].ownedPieces[i].ycoord] = new Tile(true, players[1].ownedPieces[i]);
+        }       
+    }
 }
+

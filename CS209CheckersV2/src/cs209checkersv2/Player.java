@@ -57,7 +57,7 @@ public class Player {
         boolean isAllForwardable = false;
         for(int i = 0; i < ownedPieces.length; i++) {
             ownedPieces[i].isForwardable(gameBoard, this);
-            isAllForwardable = isAllForwardable || ownedPieces[i].isForwardable;
+            isAllForwardable = (isAllForwardable || ownedPieces[i].isForwardable);
         }
         
         return isAllForwardable;
