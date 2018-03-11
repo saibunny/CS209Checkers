@@ -90,6 +90,9 @@ public class CS209CheckersV2 {
     
     
     public static void playerTurn() {
+        Piece sourcePiece = null;
+        Piece destinationPiece = null;
+        
         //if player turn is false then player is white so current player is players[0], and vice versa
         if(playerTurn == false)
             curPlayer = 0;
@@ -97,9 +100,26 @@ public class CS209CheckersV2 {
             curPlayer = 1;
         System.out.println("Player " + players[curPlayer].name + "'s turn.");
         
+        //if all the user's pieces cannot be forwardable, then they can choose to pass
+        if(players[curPlayer].checkForwardability() == true) {
+            System.out.print("No forwardable moves. Do you want to pass? (Y/N): ");
+            String answer = s.nextLine();
+            if(answer.equals("Y")) {
+            sourceCoordinate = new int[2];
+            destinationCoordinate = new int[2];
+
+            players[curPlayer].turnCount++;
+
+            playerTurn = !playerTurn;
+            return;
+            }
+        }
+        
+        
+        //getting a source piece part
         boolean isValidSourceCell = false;
         do {
-            isValidSourceCell = selectSource();
+            isValidSourceCell = selectSource(sourcePiece);
         } while(isValidSourceCell==false);
          
         
@@ -122,17 +142,22 @@ public class CS209CheckersV2 {
         swapPieces();
         //swapOwnership()
         
+        //refresh these two variables
         sourceCoordinate = new int[2];
         destinationCoordinate = new int[2];
         
+        //check winner after each move
         winner = checkWin();
         
+        //turn count increments
         players[curPlayer].turnCount++;
         
+        //toggles player turn
         playerTurn = !playerTurn;
     }
     
-    public static boolean selectSource() {
+    /*
+    public static boolean selectSource(Piece sourcePiece) {
         String sourceCell;
         boolean isValidSourceCell;
         
@@ -148,17 +173,15 @@ public class CS209CheckersV2 {
 
             //if input is valid then it is converted to a source coordinate
             sourceCoordinate = convertToCoordinate(sourceCell);
-
+            
+            //then checks if piece is owned and is movable
             //System.out.println(coordinate[0] + ", " + coordinate[1]);
             boolean isValidPiece = checkPieceValidity(sourceCoordinate);
             
-            //if 
+            //if piece is not movable then function call is ended prematurely to be called again
             if(isValidPiece==false)
                 return false;
             
-            //if the cell isn't owned the player or if the piece can't move then selected cell isn't valid
-            if(isValidPiece==false)
-                isValidSourceCell=false;
         }
         else {
             //if the input is not of length 2 then function call is ended prematurely to be called again
@@ -167,6 +190,49 @@ public class CS209CheckersV2 {
         
         System.out.println(sourceCell + " is selected.");
   
+        sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
+        
+        return true;
+    }
+    */
+    
+    public static boolean selectSource(Piece sourcePiece) {
+        String sourceCell;
+        boolean isValidSourceCell;
+        boolean isMovable;
+        
+        System.out.println("Please select a valid piece: (Format: A1, B3, D4)");
+        sourceCell = s.nextLine();
+        if(sourceCell.length()==2) {
+            isValidSourceCell = checkCellValidity(sourceCell);
+            //ends function call prematurely if not valid input
+            if(isValidSourceCell==false)
+                return false;
+            
+            //if input is valid then it is converted to a source coordinate
+            sourceCoordinate = convertToCoordinate(sourceCell);
+            
+            //then check if cell contains a piece that is owned by the current player, if not end prematurely
+            if(players[curPlayer].isOwner(sourceCoordinate[0], sourceCoordinate[1]) == false)
+                return false;
+
+            sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
+            
+            //if piece cannot be moved then function call is ended prematurely
+            if(sourcePiece.checkMovability(gameBoard, players[curPlayer]) == false) 
+                return false;
+            
+            
+        }
+        else {
+            //if the input is not of length 2 then function call is ended prematurely to be called again
+            return false;
+        }
+        
+        System.out.println(sourceCell + " is selected.");
+  
+        sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
+        
         return true;
     }
     
@@ -411,6 +477,7 @@ public class CS209CheckersV2 {
         return (isOwned && isMovable);
     }
     
+    //OBSOLETE METHOD
     //this method checks if the piece selected can be moved
     //EDIT THIS METHOD WHEN CONSIDERING HOPS AND SWAPS
     public static boolean checkMovability(Piece currpiece) {

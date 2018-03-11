@@ -5,6 +5,8 @@
  */
 package cs209checkersv2;
 
+import static cs209checkersv2.CS209CheckersV2.gameBoard;
+
 /**
  *
  * @author kendrick
@@ -46,5 +48,18 @@ public class Player {
                 break;
             }
         }
+    }
+    
+    //checks if any of the user's pieces are forwardable
+    //will return true if at least one is forwardable
+    //false if all are not forwardable
+    public boolean checkForwardability() {
+        boolean isAllForwardable = false;
+        for(int i = 0; i < ownedPieces.length; i++) {
+            ownedPieces[i].isForwardable(gameBoard, this);
+            isAllForwardable = isAllForwardable || ownedPieces[i].isForwardable;
+        }
+        
+        return isAllForwardable;
     }
 }
