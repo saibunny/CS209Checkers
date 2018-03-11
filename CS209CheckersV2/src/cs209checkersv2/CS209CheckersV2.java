@@ -41,6 +41,8 @@ public class CS209CheckersV2 {
         else if(winner==-1) {
             System.out.println("Black wins.");
         }
+        
+        printBoard();
     }
     
     //initializes board to initial state
@@ -94,6 +96,7 @@ public class CS209CheckersV2 {
     public static void playerTurn() {
         Piece sourcePiece = null;
         Piece destinationPiece = null;
+        boolean areAllOwnedForwardable = false;
         
         //if player turn is false then player is white so current player is players[0], and vice versa
         if(playerTurn == false)
@@ -102,18 +105,23 @@ public class CS209CheckersV2 {
             curPlayer = 1;
         System.out.println("Player " + players[curPlayer].name + "'s turn.");
         
+        areAllOwnedForwardable = players[curPlayer].checkForwardability();
         //if all the user's pieces cannot be forwardable, then they can choose to pass
-        if(players[curPlayer].checkForwardability() == false) {
-            System.out.print("No forwardable moves. Do you want to pass? (Y/N): ");
-            String answer = s.nextLine();
-            if(answer.equals("Y")) {
-            sourceCoordinate = new int[2];
-            destinationCoordinate = new int[2];
+        if(areAllOwnedForwardable == false) {
+            String answer = "N";
+            do {
+                System.out.print("No forwardable moves. Do you want to pass? (Y/N): ");
+                answer = s.nextLine();
+            } while(!(answer.equals("Y") || answer.equals("y") || answer.equals("N") || answer.equals("n")));
+            
+            if(answer.equals("Y") || answer.equals("y")) {
+                sourceCoordinate = new int[2];
+                destinationCoordinate = new int[2];
 
-            players[curPlayer].turnCount++;
+                players[curPlayer].turnCount++;
 
-            playerTurn = !playerTurn;
-            return;
+                playerTurn = !playerTurn;
+                return;
             }
         }
         
@@ -125,7 +133,7 @@ public class CS209CheckersV2 {
         } while(isValidSourceCell==false);
          
         
-        int[][] possibleMoves = findPlaceableCells(sourceCoordinate);
+        int[][] possibleMoves = findPlaceableCells(sourceCoordinate, areAllOwnedForwardable);
         //prints out message
         System.out.print("Possible move/s are: ");
         for(int i = 0; i < possibleMoves.length; i++) {
@@ -161,7 +169,6 @@ public class CS209CheckersV2 {
     public static boolean selectSource(Piece sourcePiece) {
         String sourceCell;
         boolean isValidSourceCell;
-        //boolean isMovable;
         
         System.out.println("Please select a valid piece: (Format: A1, B3, D4)");
         sourceCell = s.nextLine();
@@ -281,6 +288,7 @@ public class CS209CheckersV2 {
             //the player will update its list of owned pieces
             players[curPlayer].updateOwnedPieces(sourceCoordinate, destinationCoordinate);
         }
+        
         //if destination tile contains another player's piece(only happens in swaps),
         //source's piece will be held in a temp holder variable
         //source tile will then hold destination tile's piece
@@ -311,15 +319,20 @@ public class CS209CheckersV2 {
         }
     }
     
+    //this method checks if the cell inputed is from A1-A4, B1-B4, C1-C4, D1-D4
     public static boolean checkCellValidity(String cell) {
         char letter = 'A';
         int number = 1;
         String joined;
         
+        //this will run 4x4 = 16 times
         for(int i=0; i<4; i++) {
             for(int j=0; j<4; j++) {
+                //join letter and number
                 joined = letter + new Integer(number).toString();
                 //System.out.println(joined);
+                
+                //if inputted cell string exists then return true
                 if(joined.equals(cell))
                     return true;
                 number++;
@@ -327,6 +340,7 @@ public class CS209CheckersV2 {
             letter++;
             number = 1;
         }
+        //if the inputted cell is not in the range then return false
         return false;
     }
     
@@ -394,7 +408,7 @@ public class CS209CheckersV2 {
       
     //will find cells that the piece can be moved to
     //EDIT THIS METHOD WHEN CONSIDERING HOPS AND SWAPS
-    public static int[][] findPlaceableCells(int[] sourceCoordinate) {
+    public static int[][] findPlaceableCells(int[] sourceCoordinate, boolean areAllOwnedForwardable) {
         //just some holder variables
         int sourceX = sourceCoordinate[0];
         int sourceY = sourceCoordinate[1];
@@ -406,8 +420,8 @@ public class CS209CheckersV2 {
         //placeholder for the move
         int[] move = new int[2];
         
-        //checks if the piece is in the leftmost column (col 1)
-        if(sourceY==0) {
+        //checks if the piece is not on the rightmost column
+        if(sourceY < 3) {
             //if cell to the right is empty
             if(gameBoard[sourceX][sourceY+1].hasPiece == false) {
                 move[0] = sourceX;
@@ -416,25 +430,8 @@ public class CS209CheckersV2 {
                 move = new int[2];
             }
         }
-        //checks if the piece is in the middle columns (col 2 or 3)
-        else if(sourceY==1 || sourceY==2) {
-            //if cell to the left is empty
-            if(gameBoard[sourceX][sourceY-1].hasPiece == false) {
-                move[0] = sourceX;
-                move[1] = sourceY - 1;
-                possibleMoves.add(move);
-                move = new int[2];
-            }
-            //if cell to the right is empty
-            if(gameBoard[sourceX][sourceY+1].hasPiece == false) {
-                move[0] = sourceX;
-                move[1] = sourceY + 1;
-                possibleMoves.add(move);
-                move = new int[2];
-            }
-        }
-        //checks if the piece is in the rightmost column (col 4)
-        else {
+        //checks if the piece is not on the leftmost column
+        if(sourceY > 0) {
             //if cell to the left is empty
             if(gameBoard[sourceX][sourceY-1].hasPiece == false) {
                 move[0] = sourceX;
@@ -444,8 +441,8 @@ public class CS209CheckersV2 {
             }
         }
         
-        //checks if the piece is in the top row (row A)
-        if(sourceX==0) {
+        //checks if the piece is not in the bottom row
+        if(sourceX < 3) {
             //if cell below is empty
             if(gameBoard[sourceX+1][sourceY].hasPiece == false) {
                 move[0] = sourceX + 1;
@@ -454,25 +451,8 @@ public class CS209CheckersV2 {
                 move = new int[2];
             }
         }
-        //checks if the piece is in the middle rows (row B or C)
-        else if(sourceX==1 || sourceX==2) {
-            //if cell above is empty
-            if(gameBoard[sourceX-1][sourceY].hasPiece == false) {
-                move[0] = sourceX - 1;
-                move[1] = sourceY;
-                possibleMoves.add(move);
-                move = new int[2];
-            }
-            //if cell below is empty
-            if(gameBoard[sourceX+1][sourceY].hasPiece == false) {
-                move[0] = sourceX + 1;
-                move[1] = sourceY;
-                possibleMoves.add(move);
-                move = new int[2];
-            }
-        }
-        //checks if the piece is in the bottom row (row D)
-        else {
+        //checks if the piece is not in the top row
+        if(sourceX > 0) {
             //if cell above is empty
             if(gameBoard[sourceX-1][sourceY].hasPiece == false) {
                 move[0] = sourceX - 1;
@@ -482,6 +462,127 @@ public class CS209CheckersV2 {
             }
         }
         
+        //if owned pieces by current player are false then check if hoppable or swappable
+        if(areAllOwnedForwardable == false) {
+            //if x coordinate is 0 or 1 then hop down is checkable
+            if(sourceX < 2) {
+                if(gameBoard[sourceX+2][sourceY].hasPiece == false && gameBoard[sourceX+1][sourceY].hasPiece) {
+                    move[0] = sourceX + 2;
+                    move[1] = sourceY;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            //if x coordinate is 2 or 3 then hop up is checkable
+            if(sourceX > 1) {
+                if(gameBoard[sourceX-2][sourceY].hasPiece == false && gameBoard[sourceX-1][sourceY].hasPiece) {
+                    move[0] = sourceX - 2;
+                    move[1] = sourceY;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            
+            //if y coordinate is 0 or 1 then hop right is checkable
+            if(sourceY < 2) {
+                if(gameBoard[sourceX][sourceY+2].hasPiece == false && gameBoard[sourceX][sourceY+1].hasPiece) {
+                    move[0] = sourceX;
+                    move[1] = sourceY + 2;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            //if y coordinate is 2 or 3 then hop left is checkable
+            if(sourceY > 1) {
+                if(gameBoard[sourceX][sourceY-2].hasPiece == false && gameBoard[sourceX][sourceY-1].hasPiece) {
+                    move[0] = sourceX;
+                    move[1] = sourceY - 2;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            
+            //if x coordinate is 0 double hop down is checkable
+            if(sourceX == 0) {
+                if(gameBoard[sourceX+3][sourceY].hasPiece == false && gameBoard[sourceX+1][sourceY].hasPiece && gameBoard[sourceX+2][sourceY].hasPiece) {
+                    move[0] = sourceX + 3;
+                    move[1] = sourceY;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            //if x coordinate is 3 then double hop up is checkable
+            if(sourceX == 3) {
+                if(gameBoard[sourceX-3][sourceY].hasPiece == false && gameBoard[sourceX-1][sourceY].hasPiece && gameBoard[sourceX-2][sourceY].hasPiece) {
+                    move[0] = sourceX - 3;
+                    move[1] = sourceY;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            
+            //if y coordinate is 0 then double hop right is checkable
+            if(sourceY == 0) {
+                if(gameBoard[sourceX][sourceY+3].hasPiece == false && gameBoard[sourceX][sourceY+1].hasPiece && gameBoard[sourceX][sourceY+2].hasPiece) {
+                    move[0] = sourceX;
+                    move[1] = sourceY + 3;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            //if y coordinate is 3 then double hop left is checkable
+            if(sourceY == 3) {
+                if(gameBoard[sourceX][sourceY-3].hasPiece == false && gameBoard[sourceX][sourceY-1].hasPiece && gameBoard[sourceX][sourceY-2].hasPiece) {
+                    move[0] = sourceX;
+                    move[1] = sourceY - 3;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            
+            //checks if the piece is not on the rightmost column
+            if(sourceY < 3) {
+                //if cell to the right is piece of the opposite color
+                if(gameBoard[sourceX][sourceY+1].hasPiece && !gameBoard[sourceX][sourceY+1].heldPiece.owner.name.equals(players[curPlayer].name)) {
+                    move[0] = sourceX;
+                    move[1] = sourceY + 1;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            
+            //checks if the piece is not on the leftmost column
+            if(sourceY > 0) {
+                //if cell to the left is piece of the opposite color
+                if(gameBoard[sourceX][sourceY-1].hasPiece && !gameBoard[sourceX][sourceY-1].heldPiece.owner.name.equals(players[curPlayer].name)) {
+                    move[0] = sourceX;
+                    move[1] = sourceY - 1;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            
+            //checks if the piece is not in the bottom row
+            if(sourceX < 3) {
+                //if cell below is piece of the oppsite color
+                if(gameBoard[sourceX+1][sourceY].hasPiece && !gameBoard[sourceX+1][sourceY].heldPiece.owner.name.equals(players[curPlayer].name)) {
+                    move[0] = sourceX + 1;
+                    move[1] = sourceY;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+            //checks if the piece is not in the top row
+            if(sourceX > 0) {
+                //if cell above is piece of the opposite color
+                if(gameBoard[sourceX-1][sourceY].hasPiece && !gameBoard[sourceX-1][sourceY].heldPiece.owner.name.equals(players[curPlayer].name)) {
+                    move[0] = sourceX - 1;
+                    move[1] = sourceY;
+                    possibleMoves.add(move);
+                    move = new int[2];
+                }
+            }
+        }
         
         int[][] possibleMovesArray = new int[possibleMoves.size()][2];
         possibleMovesArray = possibleMoves.toArray(possibleMovesArray);
@@ -593,7 +694,7 @@ public class CS209CheckersV2 {
         players[1].ownedPieces[2] = new Piece(1,3,"B", players[1]);
         players[1].ownedPieces[3] = new Piece(2,1,"B", players[1]);
         players[1].ownedPieces[4] = new Piece(3,0,"B", players[1]);
-        players[1].ownedPieces[5] = new Piece(3,1,"B", players[1]);
+        players[1].ownedPieces[5] = new Piece(2,2,"B", players[1]);
         
         //this places the white pieces on the gameboard
         for(int i = 0; i < players[0].ownedPieces.length; i++) {
