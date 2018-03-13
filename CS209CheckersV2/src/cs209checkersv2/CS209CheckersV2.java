@@ -17,6 +17,10 @@ public class CS209CheckersV2 {
     static Player[] players;
     static boolean playerTurn;
     static int curPlayer;
+    //static Move tempMove;
+    static Move[] moves;
+    
+    static String moveType;
     
     static int[] sourceCoordinate = {0, 0};
     static int[] destinationCoordinate = {0, 0};
@@ -30,9 +34,17 @@ public class CS209CheckersV2 {
         //initializeBoard();
         //testPrintBoard();
         
+        //System.out.print(Minimax.evaluateBoard(gameBoard));
+        ArrayList<Move> possibleMoveList = CS209CheckersV2.findPossibleMoves(players[curPlayer]);
+        for(Move lol: possibleMoveList) {
+            lol.printMove();
+        }
+        
+        
         do {
             printBoard();
             playerTurn();
+            System.out.println(Minimax.evaluateBoard(gameBoard, moveType));
         } while(winner == 0);
         
         if(winner==1) {
@@ -95,8 +107,8 @@ public class CS209CheckersV2 {
     
     public static void playerTurn() {
         Piece sourcePiece = null;
-        //Piece destinationPiece = null;
         boolean areAllOwnedForwardable = false;
+        ///tempMove = new Move();
         
         //if player turn is false then player is white so current player is players[0], and vice versa
         if(playerTurn == false)
@@ -131,7 +143,7 @@ public class CS209CheckersV2 {
         for(int i = 0; i < possibleSources.length; i++) {
             System.out.print(convertToCell(possibleSources[i]) + ", ");
         }
-        //System.out.println("and " + convertToCell(possibleMoves[possibleMoves.length-1]) + ".");
+        //System.out.println("and " + convertToCell(possibleDestination[possibleDestination.length-1]) + ".");
         System.out.println();
                 
         //getting a source piece part
@@ -142,24 +154,23 @@ public class CS209CheckersV2 {
         } while(isValidSourceCell==false);
          
         
-        int[][] possibleMoves = findPlaceableCells(sourceCoordinate, areAllOwnedForwardable);
+        int[][] possibleDestination = findPlaceableCells(sourceCoordinate, areAllOwnedForwardable);
         //prints out message
         System.out.print("Possible move/s are: ");
-        for(int i = 0; i < possibleMoves.length; i++) {
-            System.out.print(convertToCell(possibleMoves[i]) + ", ");
+        for(int i = 0; i < possibleDestination.length; i++) {
+            System.out.print(convertToCell(possibleDestination[i]) + ", ");
         }
-        //System.out.println("and " + convertToCell(possibleMoves[possibleMoves.length-1]) + ".");
+        //System.out.println("and " + convertToCell(possibleDestination[possibleDestination.length-1]) + ".");
         System.out.println();
         
         
         boolean isValidDestinationCell = false;
         do {
-            isValidDestinationCell = selectDestination(possibleMoves);
+            isValidDestinationCell = selectDestination(possibleDestination);
         } while(isValidDestinationCell == false);
         
         //swapPieces(gameBoard[sourceCoordinate[0]][sourceCoordinate[1]], gameBoard[destinationCoordinate[0]][destinationCoordinate[1]]);
         swapPieces();
-        //swapOwnership()
         
         //refresh these two variables
         sourceCoordinate = new int[2];
@@ -189,6 +200,7 @@ public class CS209CheckersV2 {
             
             //if input is valid then it is converted to a source coordinate
             sourceCoordinate = convertToCoordinate(sourceCell);
+            ///tempMove.source = sourceCoordinate;
             
             //then check if cell contains a piece that is owned by the current player, if not end prematurely
             if(players[curPlayer].isOwner(sourceCoordinate[0], sourceCoordinate[1]) == false)
@@ -248,13 +260,11 @@ public class CS209CheckersV2 {
         }
         
         System.out.println(sourceCell + " is selected.");
-  
-        //sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
         
         return true;
     }
     
-    public static boolean selectDestination(int[][] possibleMoves) {
+    public static boolean selectDestination(int[][] possibleDestination) {
         String destinationCell;
         boolean isValidDestinationCell;
         boolean isValidPlaceableCell;
@@ -274,9 +284,10 @@ public class CS209CheckersV2 {
             
             
             destinationCoordinate = convertToCoordinate(destinationCell);
-
-            for(int i=0; i<possibleMoves.length; i++) {
-                if(destinationCoordinate[0]==possibleMoves[i][0] && destinationCoordinate[1]==possibleMoves[i][1]) {
+            
+            for(int i=0; i<possibleDestination.length; i++) {
+                if(destinationCoordinate[0]==possibleDestination[i][0] && destinationCoordinate[1]==possibleDestination[i][1]) {
+                    moveType = moves[i].moveType;
                     return true;
                 }
             }
@@ -314,15 +325,7 @@ public class CS209CheckersV2 {
     public static void swapPieces() {
         Tile sourceTile = gameBoard[sourceCoordinate[0]][sourceCoordinate[1]]; 
         Tile destinationTile = gameBoard[destinationCoordinate[0]][destinationCoordinate[1]];
-        
-        /*
-        tile1.hasPiece = tile2.hasPiece;
-        tile1.heldPiece = tile2.heldPiece;
-        
-        tile2.hasPiece = tempHasPiece;
-        tile2.heldPiece = tempPiece;
-        */
-        
+             
         //if destination tile is empty, source tile will have no more piece, destination tile will have the piece.
         if(destinationTile.hasPiece == false) {
             destinationTile.heldPiece = sourceTile.heldPiece;
@@ -366,6 +369,25 @@ public class CS209CheckersV2 {
             players[curPlayer].updateOwnedPieces(sourceCoordinate, destinationCoordinate);
             players[otherPlayer].updateOwnedPieces(destinationCoordinate, sourceCoordinate);
         }
+    }
+    
+    public static ArrayList<Move> findPossibleMoves(Player currentPlayer) {
+        Piece[] owned = currentPlayer.ownedPieces;
+        ArrayList<Move> movez = new ArrayList<Move>();
+        boolean areAllOwnedForwardable = currentPlayer.checkForwardability();
+        int[][] tempPossibleSources = findPossibleSources(owned);
+        int[][] tempPossibleDestinations;
+        Move tempMove;
+        for(int i = 0; i < tempPossibleSources.length; i++) {
+            tempPossibleDestinations = findPlaceableCells(tempPossibleSources[i],areAllOwnedForwardable);
+            for(int j = 0; j < tempPossibleDestinations.length; j++) {
+                tempMove = new Move(tempPossibleSources[i]);
+                tempMove.destination = tempPossibleDestinations[j];
+                movez.add(tempMove);
+            }
+            
+        }
+        return movez;
     }
     
     //this method checks if the cell inputed is from A1-A4, B1-B4, C1-C4, D1-D4
@@ -478,7 +500,6 @@ public class CS209CheckersV2 {
                 source = new int[2];
             }
         }
-        //remove later
         
         int[][] possibleSourcesArray = new int[possibleSources.size()][2];
         possibleSourcesArray = possibleSources.toArray(possibleSourcesArray);
@@ -494,19 +515,28 @@ public class CS209CheckersV2 {
         
         //maximum of 4 possible moves per piece since there are 16 cells and 12 pieces, so 4 empty cells at all times
         //per cell there is an x y coordinate hence 4 by 2 array
-        List<int[]> possibleMoves = new ArrayList<int[]>();
+        List<int[]> possibleDestination = new ArrayList<int[]>();
+        List<Move> movesList = new ArrayList<Move>();
         
         //placeholder for the move
         int[] move = new int[2];
         
+        //placeholder for move (Move)
+        Move tempMove = new Move(sourceCoordinate);
         //checks if the piece is not on the rightmost column
         if(sourceY < 3) {
             //if cell to the right is empty
             if(gameBoard[sourceX][sourceY+1].hasPiece == false) {
                 move[0] = sourceX;
                 move[1] = sourceY + 1;
-                possibleMoves.add(move);
-                move = new int[2];
+                possibleDestination.add(move);
+                
+                tempMove.moveType = "ME";
+                tempMove.destination = move;
+                movesList.add(tempMove);
+                
+                move = new int[2]; 
+                tempMove = new Move(sourceCoordinate);
             }
         }
         //checks if the piece is not on the leftmost column
@@ -515,8 +545,14 @@ public class CS209CheckersV2 {
             if(gameBoard[sourceX][sourceY-1].hasPiece == false) {
                 move[0] = sourceX;
                 move[1] = sourceY - 1;
-                possibleMoves.add(move);
-                move = new int[2];
+                possibleDestination.add(move);
+                
+                tempMove.moveType = "MW";
+                tempMove.destination = move;
+                movesList.add(tempMove);
+                
+                move = new int[2]; 
+                tempMove = new Move(sourceCoordinate);
             }
         }
         
@@ -526,8 +562,14 @@ public class CS209CheckersV2 {
             if(gameBoard[sourceX+1][sourceY].hasPiece == false) {
                 move[0] = sourceX + 1;
                 move[1] = sourceY;
-                possibleMoves.add(move);
-                move = new int[2];
+                possibleDestination.add(move);
+                
+                tempMove.moveType = "MS";
+                tempMove.destination = move;
+                movesList.add(tempMove);
+                
+                move = new int[2]; 
+                tempMove = new Move(sourceCoordinate);
             }
         }
         //checks if the piece is not in the top row
@@ -536,8 +578,14 @@ public class CS209CheckersV2 {
             if(gameBoard[sourceX-1][sourceY].hasPiece == false) {
                 move[0] = sourceX - 1;
                 move[1] = sourceY;
-                possibleMoves.add(move);
-                move = new int[2];
+                possibleDestination.add(move);
+
+                tempMove.moveType = "MN";
+                tempMove.destination = move;
+                movesList.add(tempMove);
+                
+                move = new int[2]; 
+                tempMove = new Move(sourceCoordinate);
             }
         }
         
@@ -548,8 +596,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX+2][sourceY].hasPiece == false && gameBoard[sourceX+1][sourceY].hasPiece) {
                     move[0] = sourceX + 2;
                     move[1] = sourceY;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "HS";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                    
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             //if x coordinate is 2 or 3 then hop up is checkable
@@ -557,8 +611,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX-2][sourceY].hasPiece == false && gameBoard[sourceX-1][sourceY].hasPiece) {
                     move[0] = sourceX - 2;
                     move[1] = sourceY;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "HN";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             
@@ -567,8 +627,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX][sourceY+2].hasPiece == false && gameBoard[sourceX][sourceY+1].hasPiece) {
                     move[0] = sourceX;
                     move[1] = sourceY + 2;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "HE";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             //if y coordinate is 2 or 3 then hop left is checkable
@@ -576,8 +642,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX][sourceY-2].hasPiece == false && gameBoard[sourceX][sourceY-1].hasPiece) {
                     move[0] = sourceX;
                     move[1] = sourceY - 2;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "HW";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             
@@ -586,8 +658,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX+3][sourceY].hasPiece == false && gameBoard[sourceX+1][sourceY].hasPiece && gameBoard[sourceX+2][sourceY].hasPiece) {
                     move[0] = sourceX + 3;
                     move[1] = sourceY;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "DS";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             //if x coordinate is 3 then double hop up is checkable
@@ -595,8 +673,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX-3][sourceY].hasPiece == false && gameBoard[sourceX-1][sourceY].hasPiece && gameBoard[sourceX-2][sourceY].hasPiece) {
                     move[0] = sourceX - 3;
                     move[1] = sourceY;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "DN";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             
@@ -605,8 +689,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX][sourceY+3].hasPiece == false && gameBoard[sourceX][sourceY+1].hasPiece && gameBoard[sourceX][sourceY+2].hasPiece) {
                     move[0] = sourceX;
                     move[1] = sourceY + 3;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "DE";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             //if y coordinate is 3 then double hop left is checkable
@@ -614,8 +704,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX][sourceY-3].hasPiece == false && gameBoard[sourceX][sourceY-1].hasPiece && gameBoard[sourceX][sourceY-2].hasPiece) {
                     move[0] = sourceX;
                     move[1] = sourceY - 3;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "DW";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             
@@ -625,8 +721,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX][sourceY+1].hasPiece && !gameBoard[sourceX][sourceY+1].heldPiece.owner.name.equals(players[curPlayer].name)) {
                     move[0] = sourceX;
                     move[1] = sourceY + 1;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "SE";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             
@@ -636,8 +738,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX][sourceY-1].hasPiece && !gameBoard[sourceX][sourceY-1].heldPiece.owner.name.equals(players[curPlayer].name)) {
                     move[0] = sourceX;
                     move[1] = sourceY - 1;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "SW";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             
@@ -647,8 +755,14 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX+1][sourceY].hasPiece && !gameBoard[sourceX+1][sourceY].heldPiece.owner.name.equals(players[curPlayer].name)) {
                     move[0] = sourceX + 1;
                     move[1] = sourceY;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "SS";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
             //checks if the piece is not in the top row
@@ -657,28 +771,27 @@ public class CS209CheckersV2 {
                 if(gameBoard[sourceX-1][sourceY].hasPiece && !gameBoard[sourceX-1][sourceY].heldPiece.owner.name.equals(players[curPlayer].name)) {
                     move[0] = sourceX - 1;
                     move[1] = sourceY;
-                    possibleMoves.add(move);
-                    move = new int[2];
+                    possibleDestination.add(move);
+                    
+                    tempMove.moveType = "SN";
+                    tempMove.destination = move;
+                    movesList.add(tempMove);
+                
+                    move = new int[2]; 
+                    tempMove = new Move(sourceCoordinate);
                 }
             }
         }
         
-        int[][] possibleMovesArray = new int[possibleMoves.size()][2];
-        possibleMovesArray = possibleMoves.toArray(possibleMovesArray);
+        int[][] possibleDestinationArray = new int[possibleDestination.size()][2];
+        possibleDestinationArray = possibleDestination.toArray(possibleDestinationArray);
         
-        return possibleMovesArray;
+        moves = new Move[movesList.size()];
+        moves = movesList.toArray(moves);
+        
+        return possibleDestinationArray;
     }
     
-    //swaps places of two pieces or a piece and an empty cell
-    /*public static void swap(int[] piece1, int[] piece2) {
-        int cell1 = gameBoard[piece1[0]][piece1[1]];
-        int cell2 = gameBoard[piece2[0]][piece2[1]];
-        int temp = cell2;
-        
-        gameBoard[piece1[0]][piece1[1]] = cell2;
-        gameBoard[piece2[0]][piece2[1]] = cell1;      
-    }
-    */
     
     public static void testPrintBoard() {
         for(int i=0; i<gameBoard.length; i++) {
