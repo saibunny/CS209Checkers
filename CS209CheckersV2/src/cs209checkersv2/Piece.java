@@ -44,10 +44,27 @@ public class Piece {
         this.isHoppable = false;
         this.isHoppable2 = false;
         this.isSwappable = false;
+        this.isMovableUp = false;
+        this.isMovableDown = false;
+        this.isMovableRight = false;
+        this.isMovableLeft = false;
+        this.isHoppableUp = false;
+        this.isHoppableDown = false;
+        this.isHoppableRight = false;
+        this.isHoppableLeft = false;
+        this.isHoppableUp2 = false;
+        this.isHoppableDown2 = false;
+        this.isHoppableRight2 = false;
+        this.isHoppableLeft2 = false;
+        this.isSwappableUp = false;
+        this.isSwappableDown = false;
+        this.isSwappableRight = false;
+        this.isSwappableLeft = false;
         this.owner = owner;
     }
     
     public boolean checkMovability(Tile[][] gameBoard, Player current) {
+        this.resetMovabilities();
         boolean areAllOwnedForwardable = current.checkForwardability();
         
         //checks if the piece is not in the bottom row (row D)
@@ -179,10 +196,12 @@ public class Piece {
             this.isSwappable = (this.isSwappableUp || this.isSwappableDown || this.isSwappableRight || this.isSwappableLeft);
         }
         
+        this.isMovable = (this.isMovableUp || this.isMovableDown || this.isMovableRight || this.isMovableLeft || this.isHoppable || this.isHoppable2 || this.isSwappable);
         return (this.isMovableUp || this.isMovableDown || this.isMovableRight || this.isMovableLeft || this.isHoppable || this.isHoppable2 || this.isSwappable);
     }
     
     public boolean isForwardable(Tile[][] gameBoard, Player current) {
+        this.resetMovabilities();
         //checks if the piece is not in the bottom row (row D)
         if(this.xcoord < 3) {
             //if tile below piece is empty
@@ -217,5 +236,28 @@ public class Piece {
         }
         
         return this.isForwardable;
+    }
+    
+    public void resetMovabilities() {
+        this.isForwardable = false;
+        this.isHoppable = false;
+        this.isHoppable2 = false;
+        this.isSwappable = false;
+        this.isMovableUp = false;
+        this.isMovableDown = false;
+        this.isMovableRight = false;
+        this.isMovableLeft = false;
+        this.isHoppableUp = false;
+        this.isHoppableDown = false;
+        this.isHoppableRight = false;
+        this.isHoppableLeft = false;
+        this.isHoppableUp2 = false;
+        this.isHoppableDown2 = false;
+        this.isHoppableRight2 = false;
+        this.isHoppableLeft2 = false;
+        this.isSwappableUp = false;
+        this.isSwappableDown = false;
+        this.isSwappableRight = false;
+        this.isSwappableLeft = false;
     }
 }

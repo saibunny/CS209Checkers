@@ -26,8 +26,8 @@ public class CS209CheckersV2 {
     public static void main(String[] args) {
         System.out.println("\u25CB\u25CF");
         
-        //testInitializeBoard();
-        initializeBoard();
+        testInitializeBoard();
+        //initializeBoard();
         //testPrintBoard();
         
         do {
@@ -95,7 +95,7 @@ public class CS209CheckersV2 {
     
     public static void playerTurn() {
         Piece sourcePiece = null;
-        Piece destinationPiece = null;
+        //Piece destinationPiece = null;
         boolean areAllOwnedForwardable = false;
         
         //if player turn is false then player is white so current player is players[0], and vice versa
@@ -125,11 +125,20 @@ public class CS209CheckersV2 {
             }
         }
         
-        
+        int[][] possibleSources = findPossibleSources(players[curPlayer].ownedPieces);
+        //prints out message
+        System.out.print("Possible move/s are: ");
+        for(int i = 0; i < possibleSources.length; i++) {
+            System.out.print(convertToCell(possibleSources[i]) + ", ");
+        }
+        //System.out.println("and " + convertToCell(possibleMoves[possibleMoves.length-1]) + ".");
+        System.out.println();
+                
         //getting a source piece part
         boolean isValidSourceCell = false;
         do {
-            isValidSourceCell = selectSource(sourcePiece);
+            //isValidSourceCell = selectSource(sourcePiece);
+            isValidSourceCell = selectSource(possibleSources, sourcePiece);
         } while(isValidSourceCell==false);
          
         
@@ -201,6 +210,46 @@ public class CS209CheckersV2 {
         System.out.println(sourceCell + " is selected.");
   
         sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
+        
+        return true;
+    }
+    
+    public static boolean selectSource(int[][] possibleSources, Piece sourcePiece) {
+        String sourceCell;
+        boolean isValidSourceCell;
+        
+        System.out.println("Please select a valid piece: (Format: A1, B3, D4)");
+        sourceCell = s.nextLine();
+        if(sourceCell.length()==2) {
+            isValidSourceCell = checkCellValidity(sourceCell);
+            //ends function call prematurely if not valid input
+            if(isValidSourceCell==false)
+                return false;
+            
+            //if input is valid then it is converted to a source coordinate
+            sourceCoordinate = convertToCoordinate(sourceCell);
+            
+            //then check if cell contains a piece that is owned by the current player, if not end prematurely
+            //if(players[curPlayer].isOwner(sourceCoordinate[0], sourceCoordinate[1]) == false)
+            if(checkIfPossibleSource(sourceCoordinate, possibleSources) == false)
+                return false;
+
+            sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
+            
+            //if piece cannot be moved then function call is ended prematurely
+            if(sourcePiece.checkMovability(gameBoard, players[curPlayer]) == false) 
+                return false;
+            
+            
+        }
+        else {
+            //if the input is not of length 2 then function call is ended prematurely to be called again
+            return false;
+        }
+        
+        System.out.println(sourceCell + " is selected.");
+  
+        //sourcePiece = players[curPlayer].obtainPiece(sourceCoordinate[0], sourceCoordinate[1]);
         
         return true;
     }
@@ -405,9 +454,39 @@ public class CS209CheckersV2 {
         
         return cell;
     }
-      
+    
+    //checks if the source coordinate inputted from the user is in the array of possible sources
+    public static boolean checkIfPossibleSource(int[] sourceCoordinate, int[][] possibleSources) {
+        for(int i = 0; i < possibleSources.length; i++) {
+            if(sourceCoordinate[0] == possibleSources[i][0] && sourceCoordinate[1] == possibleSources[i][1])
+                return true;
+        }
+        
+        return false;
+    }
+    
+    public static int[][] findPossibleSources(Piece[] owned) {
+        List<int[]> possibleSources = new ArrayList<int[]>();
+        int[] source = new int[2];
+        
+        for(int i = 0; i < owned.length; i++) {
+            owned[i].checkMovability(gameBoard, players[curPlayer]);
+            if(owned[i].isMovable) {
+                source[0] = owned[i].xcoord;
+                source[1] = owned[i].ycoord;
+                possibleSources.add(source);
+                source = new int[2];
+            }
+        }
+        //remove later
+        
+        int[][] possibleSourcesArray = new int[possibleSources.size()][2];
+        possibleSourcesArray = possibleSources.toArray(possibleSourcesArray);
+        
+        return possibleSourcesArray;
+    }
+    
     //will find cells that the piece can be moved to
-    //EDIT THIS METHOD WHEN CONSIDERING HOPS AND SWAPS
     public static int[][] findPlaceableCells(int[] sourceCoordinate, boolean areAllOwnedForwardable) {
         //just some holder variables
         int sourceX = sourceCoordinate[0];
